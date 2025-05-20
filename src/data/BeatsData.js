@@ -8,9 +8,9 @@ const beatsData = [
 
     benefits: [
 
-      {heading: 'Deep Sleep'},
-      {heading: 'Pain Relief'},
-     { heading: 'Healing'},
+      'Deep Sleep',
+      'Pain Relief',
+    'Healing',
     ],
     icon: 'sleep',
     color: '#142B2E',
@@ -25,9 +25,9 @@ const beatsData = [
     
     benefits: [
 
-      {heading: 'Meditaion'},
-      {heading: 'Deep Relax'},
-     { heading: 'Creativity'},
+      'Meditaion',
+      'Deep Relax',
+    'Creativity',
     ],
     icon: 'meditation',
     color: '#F39F80',
@@ -42,9 +42,9 @@ const beatsData = [
     
     benefits: [
 
-      {heading: 'Stress Relief'},
-      {heading: 'Fast Learning'},
-     { heading: 'Positive Thinking'},
+      'Stress Relief',
+      'Fast Learning',
+    'Positive Thinking',
     ],
     
     icon: 'emoticon-happy-outline',
@@ -60,9 +60,9 @@ const beatsData = [
     
     benefits: [
 
-      {heading: 'Focus Studying'},
-      {heading: 'Problem Solving'},
-     { heading: 'Focused Attention'},
+      'Focus Studying',
+      'Problem Solving',
+    'Focused Attention',
     ],
     icon: 'user-graduate',
     color: '#FFC800',
@@ -78,9 +78,9 @@ const beatsData = [
     
     benefits: [
 
-      {heading: 'Super Intelligence'},
-      {heading: 'Peak Awareness'},
-     { heading: 'Increase Creativity'},
+      'Super Intelligence',
+      'Peak Awareness',
+    'Increase Creativity',
     ],
     icon: 'brain',
     color: '#23353F',

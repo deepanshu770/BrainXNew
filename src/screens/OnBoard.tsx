@@ -1,4 +1,4 @@
-import React, {useState } from "react";
+import React, {useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -18,6 +18,8 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { KEYS, storage } from "../utils/Storage";
+import { StackActions, useNavigation } from "@react-navigation/native";
 
 
 
@@ -52,6 +54,8 @@ const OnBoard = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const translateX = useSharedValue(0);
   const isSliding = useSharedValue(false);
+  const navigation = useNavigation();
+
 
   // Smooth transition to specific index
   const goToIndex = (index:number) => {
@@ -67,6 +71,13 @@ const OnBoard = () => {
       }
     });
   };
+
+  const getStarted = useCallback(()=>{
+    storage.set(KEYS.NEW_USER,true);
+    navigation.dispatch(
+      StackActions.replace('Home')
+    );
+  },[])
 
   // Skip to last slide
   const skipToEnd = () => {
@@ -219,7 +230,7 @@ const OnBoard = () => {
       </View>
 
       {currentIndex === onboardingData.length - 1 ? (
-        <TouchableOpacity style={styles.buttonContainer}>
+        <TouchableOpacity onPress={getStarted} style={styles.buttonContainer}>
           <Text style={styles.button}>Get Started</Text>
         </TouchableOpacity>
       ) : (

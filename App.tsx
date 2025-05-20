@@ -9,8 +9,10 @@ import { NavigationContainer } from '@react-navigation/native';
 import React from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Root from './src/routes/Root.route';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 
 
+Ionicons.loadFont();
 
 
 
@@ -18,7 +20,7 @@ function App(): React.JSX.Element {
   return (
     <NavigationContainer>
       <GestureHandlerRootView>
-        <Root />
+        <Root/>
       </GestureHandlerRootView>
     </NavigationContainer>
   );

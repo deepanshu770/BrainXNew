@@ -49,6 +49,7 @@ const beatsData = [
     
     icon: 'emoticon-happy-outline',
     color: '#F37557',
+   
     bgColor: '#FFFFFF',
   },
   {

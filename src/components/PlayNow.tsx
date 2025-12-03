@@ -1,14 +1,14 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle, 
-  withSpring 
+import { TouchableOpacity, StyleSheet } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
 } from 'react-native-reanimated';
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
-const PlayNowButton = ({ title,onPress,animatedStyles }:any) => {
+const PlayNowButton = ({ title,onPress,animatedStyles,animatedTitleStyles }:any) => {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -34,15 +34,14 @@ const PlayNowButton = ({ title,onPress,animatedStyles }:any) => {
       activeOpacity={0.8}
 
     >
-    
-      <Text style={styles.buttonText}>{title}</Text>
+      <Animated.Text style={[styles.buttonText,animatedTitleStyles]}>{title}</Animated.Text>
     </AnimatedTouchable>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
-    backgroundColor: '#FF4757',
+    backgroundColor: '#9f9992ff',
     paddingVertical: 15,
     paddingHorizontal: 40,
     borderRadius: 25,

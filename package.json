@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "android": "react-native run-android --active-arch-only && react-native start",
+    "android": "react-native run-android --active-arch-only && react-native start --reset-cache",
     "ios": "react-native run-ios",
     "lint": "eslint .",
     "start": "react-native start",
@@ -13,13 +13,16 @@
     "@react-native-community/slider": "^4.5.6",
     "@react-navigation/native": "^7.1.6",
     "@react-navigation/native-stack": "^7.3.10",
+    "moti": "^0.30.0",
     "react": "19.0.0",
     "react-native": "0.79.0",
+    "react-native-audio-api": "^0.10.3",
     "react-native-gesture-handler": "^2.25.0",
     "react-native-mmkv": "^3.2.0",
     "react-native-reanimated": "^3.17.4",
     "react-native-safe-area-context": "^5.4.0",
     "react-native-screens": "^4.10.0",
+    "react-native-sound": "^0.13.0",
     "react-native-vector-icons": "^10.2.0"
   },
   "devDependencies": {

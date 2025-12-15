@@ -6,7 +6,7 @@
  */
 
 import { NavigationContainer } from '@react-navigation/native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Root from './src/routes/Root.route';
 import Ionicons from 'react-native-vector-icons/Ionicons';

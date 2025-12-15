@@ -6,9 +6,12 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
-const PlayNowButton = ({ title,onPress,animatedStyles,animatedTitleStyles }:any) => {
+const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
+const AnimatedIcon = Animated.createAnimatedComponent(Icon);
+
+const PlayNowButton = ({ title, onPress, animatedStyles, animatedTitleStyles }: any) => {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -27,14 +30,18 @@ const PlayNowButton = ({ title,onPress,animatedStyles,animatedTitleStyles }:any)
 
   return (
     <AnimatedTouchable
-      style={[styles.button, animatedStyle,animatedStyles]}
+      style={[styles.button, animatedStyle, animatedStyles]}
       onPress={onPress}
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       activeOpacity={0.8}
 
     >
-      <Animated.Text style={[styles.buttonText,animatedTitleStyles]}>{title}</Animated.Text>
+      <Animated.View style={styles.wrapper}>
+
+        <AnimatedIcon style={[styles.icon,animatedTitleStyles]} name='play' size={27} />
+        <Animated.Text style={[styles.buttonText, animatedTitleStyles]}>{title}</Animated.Text>
+      </Animated.View>
     </AnimatedTouchable>
   );
 };
@@ -58,6 +65,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     letterSpacing: 1,
   },
+  wrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  icon:{
+    marginHorizontal:10,
+  }
 });
 
 export default React.memo(PlayNowButton);

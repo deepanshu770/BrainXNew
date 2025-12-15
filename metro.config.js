@@ -1,7 +1,10 @@
-const {getDefaultConfig, mergeConfig} = require('@react-native/metro-config');
+const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const {
-    wrapWithReanimatedMetroConfig,
-  } = require('react-native-reanimated/metro-config');
+  wrapWithAudioAPIMetroConfig,
+} = require('react-native-audio-api/metro-config');
+const {
+  wrapWithReanimatedMetroConfig,
+} = require('react-native-reanimated/metro-config');
 
 /**
  * Metro configuration
@@ -11,11 +14,10 @@ const {
  */
 // metro.config.js
 const config = {};
-const reanimatedMetroConfig  = wrapWithReanimatedMetroConfig(config);
+const audioAPIMetroConfig = wrapWithAudioAPIMetroConfig(config);
+const reanimatedMetroConfig = wrapWithReanimatedMetroConfig(config);
 const defaultConfig = getDefaultConfig(__dirname);
 
 
-module.exports = mergeConfig(defaultConfig,config,reanimatedMetroConfig);
-
-
-//   module.exports = wrapWithReanimatedMetroConfig(config);
+module.exports = mergeConfig(defaultConfig, config, reanimatedMetroConfig,
+  audioAPIMetroConfig);

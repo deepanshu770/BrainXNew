@@ -35,23 +35,15 @@ type BeatCardProps = {
   item: Beat;
   index: number;
   scrollOffset: SharedValue<number>;
-  onPress: (index: number, measure: MeasuredDimensions | null) => void;
 };
 
 const BeatCardComponent = ({
   item,
   index,
   scrollOffset,
-  onPress,
 }: BeatCardProps) => {
   const ref = useAnimatedRef();
-  const onPressHandler = () => {
-    runOnUI(() => {
-      'worklet';
-      const m = measure(ref);
-      runOnJS(onPress)(index, m);
-    })();
-  };
+ 
   const cardStyle = useAnimatedStyle(() => {
     const progress = scrollOffset.value / width - index;
 
@@ -109,7 +101,7 @@ const BeatCardComponent = ({
           <Text style={styles.rangeValue}>{item.frequency_gap}</Text>
         </View>
       </View>
-      <TouchableNativeFeedback onPress={onPressHandler}>
+      
         <Animated.View
           ref={ref}
           style={[styles.imageWrapper, {backgroundColor: softAccent}]}>
@@ -119,7 +111,6 @@ const BeatCardComponent = ({
             resizeMode="cover"
           />
         </Animated.View>
-      </TouchableNativeFeedback>
 
       <View style={styles.benefitsWrapper}>
         {item.benefits.map((benefit, benefitIndex) => (
@@ -217,19 +208,10 @@ const Home = () => {
   );
 
   const playHandler = useCallback(() => {
-    const currentIndex = Math.round(scrollProgress.value);
-    navigation.navigate('Player', {beatId: beatsData[currentIndex]?.id});
+    const index = Math.round(scrollProgress.value);
+    navigation.navigate('Player', {index});
   }, [navigation, scrollProgress]);
 
-  const onCardPress = (index: number, mesure: MeasuredDimensions | null) => {
-    console.log(index,mesure);
-    navigation.push('SharedTransition', {
-      item: {
-        index,
-        mediaSpecs: {...mesure, borderRadius: 20},
-      },
-    });
-  };
 
   const headerAccent = useMemo(() => `${colors[0]}33`, []);
 
@@ -265,7 +247,6 @@ const Home = () => {
           {beatsData.map((item, index) => (
             <View key={item.id} style={styles.cardWrapper}>
               <BeatCard
-                onPress={onCardPress}
                 item={item}
                 index={index}
                 scrollOffset={scrollOffset}
@@ -377,8 +358,11 @@ const styles = StyleSheet.create({
     padding: 24,
     shadowColor: '#0b1c26',
     minHeight: 475,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   cardHeader: {
+    width:'100%',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -412,7 +396,7 @@ const styles = StyleSheet.create({
   imageWrapper: {
     width: '100%',
     aspectRatio: 1.15,
-    height: '60%',
+    height: '50%',
     borderRadius: 18,
     overflow: 'hidden',
     marginBottom: 16,
@@ -424,6 +408,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   benefitsWrapper: {
+    width: '100%',
     flexDirection: 'row',
     flexWrap: 'wrap',
     marginHorizontal: -4,
@@ -438,7 +423,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   benefitChipText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '600',
   },
   paginationBar: {

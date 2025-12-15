@@ -2,10 +2,9 @@ import {
   Dimensions,
   StyleSheet,
   Text,
-  TouchableNativeFeedback,
   View,
 } from 'react-native';
-import React, {memo, useCallback, useMemo} from 'react';
+import React, {useCallback, useMemo, useState} from 'react';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import Animated, {
   Extrapolation,
@@ -15,14 +14,12 @@ import Animated, {
   useAnimatedRef,
   useAnimatedStyle,
   useScrollViewOffset,
-  measure,
-  runOnUI,
-  runOnJS,
 } from 'react-native-reanimated';
-import type {MeasuredDimensions, SharedValue} from 'react-native-reanimated';
-import {useNavigation} from '@react-navigation/native';
+import type { SharedValue} from 'react-native-reanimated';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import beatsData from '../data/BeatsData';
 import PlayNow from '../components/PlayNow';
+import { UserStats } from '../services/UserStats';
 
 const {width} = Dimensions.get('window');
 const colors = beatsData.map(item => item.color);
@@ -37,7 +34,7 @@ type BeatCardProps = {
   scrollOffset: SharedValue<number>;
 };
 
-const BeatCardComponent = ({
+const BeatCard = ({
   item,
   index,
   scrollOffset,
@@ -127,20 +124,14 @@ const BeatCardComponent = ({
   );
 };
 
-const BeatCard = memo(
-  BeatCardComponent,
-  (prev, next) =>
-    prev.item.id === next.item.id &&
-    prev.index === next.index &&
-    prev.scrollOffset === next.scrollOffset,
-);
+
 
 type PaginationDotProps = {
   index: number;
   scrollOffset: SharedValue<number>;
 };
 
-const PaginationDotComponent = ({index, scrollOffset}: PaginationDotProps) => {
+const PaginationDot = ({index, scrollOffset}: PaginationDotProps) => {
   const dotStyle = useAnimatedStyle(() => {
     const progress = scrollOffset.value / width - index;
     return {
@@ -162,17 +153,7 @@ const PaginationDotComponent = ({index, scrollOffset}: PaginationDotProps) => {
   return <Animated.View style={[styles.paginationDot, dotStyle]} />;
 };
 
-const PaginationDot = memo(
-  PaginationDotComponent,
-  (prev, next) =>
-    prev.index === next.index && prev.scrollOffset === next.scrollOffset,
-);
 
-const quickStats = [
-  {label: 'Sessions', value: '24'},
-  {label: 'Weekly streak', value: '5 days'},
-  {label: 'Focus level', value: 'High'},
-];
 
 const Home = () => {
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -182,6 +163,26 @@ const Home = () => {
   const activeColor = useDerivedValue(() =>
     interpolateColor(scrollProgress.value, inputRange, colors),
   );
+
+  const [stats, setStats] = useState({ totalSessions: 0, streak: 0, dailySessions: 0 });
+
+  useFocusEffect(
+    useCallback(() => {
+      setStats(UserStats.getStats());
+    }, [])
+  );
+
+  const quickStats = useMemo(() => {
+    let focusLevel = 'Low';
+    if (stats.streak >= 7) focusLevel = 'High';
+    else if (stats.streak >= 3) focusLevel = 'Medium';
+
+    return [
+      {label: 'Sessions', value: stats.totalSessions.toString()},
+      {label: 'Daily streak', value: `${stats.streak} days`},
+      {label: 'Focus level', value: focusLevel},
+    ];
+  }, [stats]);
 
   const animatedButtonStyle = useAnimatedStyle(
     () => ({
@@ -213,7 +214,6 @@ const Home = () => {
   }, [navigation, scrollProgress]);
 
 
-  const headerAccent = useMemo(() => `${colors[0]}33`, []);
 
   return (
     <Animated.View style={[styles.root, backgroundStyle]}>
@@ -222,10 +222,6 @@ const Home = () => {
           <View>
             <Text style={styles.greeting}>Hi there 👋</Text>
             <Text style={styles.subHeading}>Let’s tune your mind today</Text>
-          </View>
-          <View style={[styles.progressPill, {backgroundColor: headerAccent}]}>
-            <Text style={styles.progressPillLabel}>Daily goal</Text>
-            <Text style={styles.progressPillValue}>2 / 3</Text>
           </View>
         </View>
 

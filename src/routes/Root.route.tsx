@@ -21,13 +21,11 @@ const Root = () => {
       }}>
       <RootStack.Screen name="Onboard" component={OnBoard} />
       <RootStack.Screen name="Home" component={Home} />
-      <RootStack.Screen name="Player" component={Player} />
       <RootStack.Screen
-        name="SharedTransition"
-        component={SharedTransitionScreen}
+        name="Player"
+        component={Player}
         options={{
-          animation: 'fade',
-          presentation: 'transparentModal',
+          animation: 'fade_from_bottom',
         }}
       />
     </RootStack.Navigator>

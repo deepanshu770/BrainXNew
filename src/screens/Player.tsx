@@ -16,7 +16,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import { useNavigation, useRoute } from '@react-navigation/native';
 import beatsData from '../data/BeatsData';
-import { AudioContext } from 'react-native-audio-api';
+import { AudioEngine } from '../services/AudioEngine';
+import { UserStats } from '../services/UserStats';
 
 const width = Dimensions.get("window").width;
 
@@ -32,17 +33,14 @@ const Player = () => {
   const item = beatsData.at(index as number) || beatsData[0];
 
   // --- REFS ---
-  const audioCtx = useRef<AudioContext | null>(null);
-  const gainNode = useRef<any>(null);
-  // We need to store oscillators to update frequency dynamically
-  const oscillatorsRef = useRef<{ left: any, right: any } | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // --- STATE ---
   const [isPlaying, setIsPlaying] = useState(false);
   const [duration] = useState(900); 
   const [currentTime, setCurrentTime] = useState(0);
-  const [isRepeatOn, setIsRepeatOn] = useState(true);
+  const [isRepeatOn, setIsRepeatOn] = useState(false);
+
   
   // NEW: Track selected sub-category (Default to 0)
   const [subIndex, setSubIndex] = useState(0);
@@ -50,93 +48,43 @@ const Player = () => {
   // Get current active data
   const activeSub = item.subCategories[subIndex || 0];
 
-  // --- AUDIO ENGINE ---
-  const setupAudioGraph = useCallback(() => {
-    if (audioCtx.current) return;
-
-    // Use currently selected sub-category or fallback
-    const targetData = activeSub;
-
-    const ctx = new AudioContext();
-    audioCtx.current = ctx;
-
-    const oscLeft = ctx.createOscillator();
-    const oscRight = ctx.createOscillator();
-    const pannerLeft = ctx.createStereoPanner();
-    const pannerRight = ctx.createStereoPanner();
-    const mainGain = ctx.createGain();
-
-    oscLeft.type = 'sine';
-    oscRight.type = 'sine';
-    
-    // Set Initial Frequencies
-    oscLeft.frequency.value = targetData.baseFreq;
-    oscRight.frequency.value = targetData.baseFreq + targetData.beatFreq;
-
-    pannerLeft.pan.value = -1;
-    pannerRight.pan.value = 1;
-    mainGain.gain.value = 0.5;
-
-    // Connect
-    oscLeft.connect(pannerLeft);
-    pannerLeft.connect(mainGain);
-    oscRight.connect(pannerRight);
-    pannerRight.connect(mainGain);
-    mainGain.connect(ctx.destination);
-
-    // Save Refs
-    gainNode.current = mainGain;
-    oscillatorsRef.current = { left: oscLeft, right: oscRight };
-
-    const now = ctx.currentTime;
-    oscLeft.start(now);
-    oscRight.start(now);
-  }, [item, activeSub]); // Re-create if item changes, but usually we just update freq
-
+  
   // --- DYNAMIC FREQUENCY UPDATE ---
-  // This effect runs when user taps a different pill
   useEffect(() => {
-    if (audioCtx.current && oscillatorsRef.current && activeSub) {
-      const { baseFreq, beatFreq } = activeSub;
-      const now = audioCtx.current.currentTime;
-      
-      // Smoothly transition frequency over 0.2 seconds to avoid "clicks"
-      // Note: react-native-audio-api might prefer setValueAtTime or direct assignment
-      try {
-        oscillatorsRef.current.left.frequency.setValueAtTime(baseFreq, now);
-        oscillatorsRef.current.right.frequency.setValueAtTime(baseFreq + beatFreq, now);
-      } catch (e) {
-        // Fallback if timing is off
-        oscillatorsRef.current.left.frequency.value = baseFreq;
-        oscillatorsRef.current.right.frequency.value = baseFreq + beatFreq;
-      }
+    if (activeSub) {
+      AudioEngine.updateFrequency(activeSub.baseFreq, activeSub.beatFreq);
     }
   }, [activeSub]);
 
-  // --- CLEANUP ---
-  const cleanupAudio = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (audioCtx.current) {
-      try {
-        gainNode.current?.gain.setValueAtTime(0, audioCtx.current.currentTime);
-        audioCtx.current.close();
-      } catch (e) { console.log(e); }
-      audioCtx.current = null;
-      oscillatorsRef.current = null;
+  // --- SESSION RECORDING & AUTO STOP ---
+  useEffect(() => {
+    if (currentTime > 0 && currentTime >= duration) {
+      if (currentTime === duration) {
+        UserStats.recordSession();
+      }
+      if (!isRepeatOn) {
+        setIsPlaying(false);
+        if (timerRef.current) clearInterval(timerRef.current);
+        AudioEngine.pause();
+      }
     }
+  }, [currentTime, duration, isRepeatOn]);
+
+  // --- CLEANUP ---
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      AudioEngine.pause();
+    };
   }, []);
 
-  useEffect(() => {
-    return () => cleanupAudio();
-  }, [cleanupAudio]);
-
-  // App State handling... (Same as before)
+  // App State handling
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (nextAppState) => {
       if (nextAppState === 'active' && isPlaying) {
-        audioCtx.current?.resume();
-      } else if (nextAppState.match(/inactive|background/) && !isPlaying) {
-        audioCtx.current?.suspend();
+        AudioEngine.resume();
+      } else if (nextAppState.match(/inactive|background/)) {
+        AudioEngine.suspend();
       }
     });
     return () => subscription.remove();
@@ -144,17 +92,24 @@ const Player = () => {
 
   // --- CONTROLS ---
   const togglePlay = async () => {
-    if (!audioCtx.current) setupAudioGraph();
-
     if (isPlaying) {
       setIsPlaying(false);
       if (timerRef.current) clearInterval(timerRef.current);
-      await audioCtx.current?.suspend();
+      await AudioEngine.pause();
     } else {
+      if (currentTime >= duration) {
+        setCurrentTime(0);
+      }
+
       setIsPlaying(true);
-      await audioCtx.current?.resume();
+      await AudioEngine.play(activeSub.baseFreq, activeSub.beatFreq);
       timerRef.current = setInterval(() => {
-        setCurrentTime((prev) => (prev >= duration ? (isRepeatOn ? 0 : duration) : prev + 1));
+        setCurrentTime((prev) => {
+          if (prev >= duration) {
+            return isRepeatOn ? 0 : duration;
+          }
+          return prev + 1;
+        });
       }, 1000);
     }
   };

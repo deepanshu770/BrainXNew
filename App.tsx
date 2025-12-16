@@ -11,6 +11,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Root from './src/routes/Root.route';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { AudioEngine } from './src/services/AudioEngine';
+import BootSplash from 'react-native-bootsplash'
 
 
 Ionicons.loadFont();
@@ -18,16 +19,16 @@ Ionicons.loadFont();
 
 
 function App(): React.JSX.Element {
-  useEffect(() => {
+  const onReady = () => {
+    BootSplash.hide({ fade: true });
     AudioEngine.initialize();
-  }, []);
-
+  }
   return (
-    <NavigationContainer>
-      <GestureHandlerRootView>
-        <Root/>
-      </GestureHandlerRootView>
-    </NavigationContainer>
+    <GestureHandlerRootView>
+      <NavigationContainer onReady={onReady}>
+        <Root />
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }
 

@@ -1,13 +1,10 @@
 buildscript {
     ext {
         buildToolsVersion = "35.0.0"
-        // minSdkVersion change for react-native-audio-pro (Prev 24)
-        minSdkVersion = 26
+        minSdkVersion = 24
         compileSdkVersion = 35
         targetSdkVersion = 35
         ndkVersion = "27.1.12297006"
-        // Use Kotlin 2.x to match some libraries (ktor/okhttp/okio) compiled with Kotlin 2.2
-        kotlinVersion = "2.2.21"
     }
     repositories {
         google()
@@ -17,7 +14,7 @@ buildscript {
         // Explicit plugin versions to avoid mismatches in subprojects
         classpath("com.android.tools.build:gradle:8.8.2")
         classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlinVersion}")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
     }
 }
 

@@ -20,7 +20,6 @@ import Animated, {
 import type { SharedValue } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KEYS, storage } from '../utils/Storage';
-import { StackActions, useNavigation } from '@react-navigation/native';
 
 
 
@@ -148,7 +147,6 @@ const OnBoard = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const translateX = useSharedValue(0);
   const isSliding = useSharedValue(false);
-  const navigation = useNavigation();
   const isLastSlide = currentIndex === onboardingData.length - 1;
 
 
@@ -175,11 +173,9 @@ const OnBoard = () => {
   };
 
   const getStarted = useCallback(() => {
-    storage.set(KEYS.NEW_USER, true);
-    navigation.dispatch(
-      StackActions.replace('Home')
-    );
-  }, [navigation]);
+    storage.set(KEYS.OLD_USER, true);
+  
+  }, []);
 
   // Skip to last slide
   const skipToEnd = () => {

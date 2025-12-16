@@ -8,7 +8,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   AppState,
-  ScrollView, 
+  ScrollView,
   Platform
 } from 'react-native';
 import Slider from '@react-native-community/slider';
@@ -27,28 +27,152 @@ const formatTime = (secs: number) => {
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 };
 
+const PlayerHeader = ({ title, color, onBack }: { title: string, color: string, onBack: () => void }) => (
+  <View style={styles.header}>
+    <TouchableOpacity onPress={onBack} style={styles.iconButton}>
+      <Ionicons name="chevron-down" size={30} color={color} />
+    </TouchableOpacity>
+    <Text style={[styles.headerTitle, { color: color }]}>{title} Session</Text>
+    <View style={{ width: 40 }} />
+  </View>
+);
+
+const PlayerArtwork = ({ image, color }: { image: any, color: string }) => (
+  <View style={styles.artworkContainer}>
+    <View style={styles.artworkWrapper}>
+      <Animated.Image
+        sharedTransitionTag='image'
+        style={styles.artwork}
+        source={image}
+      />
+    </View>
+    <Text style={[styles.helperText, { color: color }]}>
+      <Ionicons name="headset" size={14} /> Headphones Required
+    </Text>
+  </View>
+);
+
+const SubCategorySelector = ({ subCategories, selectedIndex, onSelect, color, bgColor }: any) => {
+  if (!subCategories) return null;
+  return (
+    <View style={styles.selectorContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.selectorContent}
+      >
+        {subCategories.map((sub: any, idx: number) => {
+          const isActive = idx === selectedIndex;
+          return (
+            <TouchableOpacity
+              key={sub.id}
+              onPress={() => onSelect(idx)}
+              style={[
+                styles.pill,
+                {
+                  backgroundColor: isActive ? color : 'transparent',
+                  borderColor: color,
+                }
+              ]}
+            >
+              <Text style={[
+                styles.pillText,
+                { color: isActive ? bgColor : color }
+              ]}>
+                {sub.title}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+};
+
+const PlayerInfo = ({ title, description, frequency, color, enteringKey }: any) => (
+  <View style={styles.infoContainer}>
+    <Animated.View key={enteringKey} entering={FadeInDown.duration(300)} style={{ alignItems: 'center' }}>
+      <Text style={[styles.songTitle, { color: color }]}>
+        {title}
+      </Text>
+      <Text style={[styles.artistName, { color: color }]}>
+        {description}
+      </Text>
+      <Text style={[styles.frequencyText, { color: color }]}>
+        {frequency}
+      </Text>
+    </Animated.View>
+  </View>
+);
+
+const PlayerProgress = ({ currentTime, duration, color, onSeek }: any) => (
+  <View style={styles.progressContainer}>
+    <Slider
+      style={styles.slider}
+      value={currentTime}
+      minimumValue={0}
+      maximumValue={duration}
+      minimumTrackTintColor={color}
+      maximumTrackTintColor="rgba(0,0,0,0.1)"
+      thumbTintColor={color}
+      onSlidingComplete={onSeek}
+    />
+    <View style={styles.timeLabels}>
+      <Text style={[styles.timeText, { color: color }]}>{formatTime(currentTime)}</Text>
+      <Text style={[styles.timeText, { color: color }]}>{formatTime(duration)}</Text>
+    </View>
+  </View>
+);
+
+const PlayerControls = ({ isPlaying, isRepeatOn, color, bgColor, onTogglePlay, onToggleRepeat, onSeekBack }: any) => (
+  <View style={styles.controlsContainer}>
+    <TouchableOpacity onPress={onSeekBack}>
+      <Ionicons name="play-back-outline" size={30} color={color} />
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      onPress={onTogglePlay}
+      activeOpacity={0.8}
+      style={[styles.playButton, { backgroundColor: color }]}
+    >
+      <Ionicons
+        name={isPlaying ? "pause" : "play"}
+        size={40}
+        color={bgColor}
+        style={{ marginLeft: isPlaying ? 0 : 4 }}
+      />
+    </TouchableOpacity>
+
+    <TouchableOpacity onPress={onToggleRepeat}>
+      <Ionicons
+        name={isRepeatOn ? "infinite" : "stop-circle-outline"}
+        size={30}
+        color={color}
+        style={{ opacity: isRepeatOn ? 1 : 0.5 }}
+      />
+    </TouchableOpacity>
+  </View>
+);
+
 const Player = () => {
   const navigation = useNavigation();
   const { params: { index } } = useRoute();
+
   const item = beatsData.at(index as number) || beatsData[0];
-
-  // --- REFS ---
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
-
-  // --- STATE ---
   const [isPlaying, setIsPlaying] = useState(false);
-  const [duration] = useState(900); 
+  const [duration] = useState(900);
   const [currentTime, setCurrentTime] = useState(0);
   const [isRepeatOn, setIsRepeatOn] = useState(false);
-
-  
-  // NEW: Track selected sub-category (Default to 0)
   const [subIndex, setSubIndex] = useState(0);
-
-  // Get current active data
   const activeSub = item.subCategories[subIndex || 0];
 
-  
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const isRepeatOnRef = useRef(isRepeatOn);
+
+  useEffect(() => {
+    isRepeatOnRef.current = isRepeatOn;
+  }, [isRepeatOn]);
+
   // --- DYNAMIC FREQUENCY UPDATE ---
   useEffect(() => {
     if (activeSub) {
@@ -91,152 +215,84 @@ const Player = () => {
   }, [isPlaying]);
 
   // --- CONTROLS ---
-  const togglePlay = async () => {
+  const togglePlay = useCallback(async () => {
     if (isPlaying) {
       setIsPlaying(false);
       if (timerRef.current) clearInterval(timerRef.current);
       await AudioEngine.pause();
     } else {
-      if (currentTime >= duration) {
-        setCurrentTime(0);
-      }
-
+      setCurrentTime(prev => {
+        if (prev >= duration) {
+          return 0;
+        }
+        return prev;
+      })
       setIsPlaying(true);
       await AudioEngine.play(activeSub.baseFreq, activeSub.beatFreq);
       timerRef.current = setInterval(() => {
         setCurrentTime((prev) => {
           if (prev >= duration) {
-            return isRepeatOn ? 0 : duration;
+            return isRepeatOnRef.current ? 0 : duration;
           }
           return prev + 1;
         });
       }, 1000);
     }
-  };
+  }, [isPlaying, activeSub, duration]); // Removed isRepeatOn from dependency, using ref
 
-  const handleSeek = (value: number) => setCurrentTime(value);
+  const handleSeek = useCallback((value: number) => setCurrentTime(value), []);
+  const handleBack = useCallback(() => navigation.goBack(), [navigation]);
+  const handleSubSelect = useCallback((idx: number) => setSubIndex(idx), []);
+  const handleSeekBack = useCallback(() => setCurrentTime(t => Math.max(0, t - 15)), []);
+  const handleToggleRepeat = useCallback(() => setIsRepeatOn(r => !r), []);
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: item.bgColor }]}>
       <StatusBar barStyle="dark-content" backgroundColor={item.bgColor} />
 
-      {/* HEADER */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.iconButton}>
-          <Ionicons name="chevron-down" size={30} color={item.color} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: item.color }]}>{item.title} Session</Text>
-        <View style={{ width: 40 }} />
-      </View>
+      <PlayerHeader 
+        title={item.title} 
+        color={item.color} 
+        onBack={handleBack} 
+      />
 
-      {/* ARTWORK */}
-      <View style={styles.artworkContainer}>
-        <View style={styles.artworkWrapper}>
-          <Animated.Image
-            sharedTransitionTag='image'
-            style={styles.artwork}
-            source={item.image}
-          />
-        </View>
-        <Text style={[styles.helperText, { color: item.color }]}>
-          <Ionicons name="headset" size={14} /> Headphones Required
-        </Text>
-      </View>
+      <PlayerArtwork 
+        image={item.image} 
+        color={item.color} 
+      />
 
-      {/* --- NEW: SUB-CATEGORY SELECTOR --- */}
-      {item.subCategories && (
-        <View style={styles.selectorContainer}>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.selectorContent}
-          >
-            {item.subCategories.map((sub, idx) => {
-              const isActive = idx === subIndex;
-              return (
-                <TouchableOpacity
-                  key={sub.id}
-                  onPress={() => setSubIndex(idx)}
-                  style={[
-                    styles.pill,
-                    { 
-                      backgroundColor: isActive ? item.color : 'transparent',
-                      borderColor: item.color,
-                    }
-                  ]}
-                >
-                  <Text style={[
-                    styles.pillText,
-                    { color: isActive ? item.bgColor : item.color }
-                  ]}>
-                    {sub.title}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-      )}
+      <SubCategorySelector
+        subCategories={item.subCategories}
+        selectedIndex={subIndex}
+        onSelect={(idx:number)=>setSubIndex(idx)}
+        color={item.color}
+        bgColor={item.bgColor}
+      />
 
-      {/* INFO */}
-      <View style={styles.infoContainer}>
-        {/* Animated Key to force refresh animation when text changes */}
-        <Animated.View key={subIndex} entering={FadeInDown.duration(300)}>
-            <Text style={[styles.songTitle, { color: item.color }]}>
-            {activeSub?.title || item.title}
-            </Text>
-            <Text style={[styles.artistName, { color: item.color }]}>
-            {activeSub?.description || item.frequency_gap}
-            </Text>
-        </Animated.View>
-      </View>
+      <PlayerInfo
+        title={activeSub?.title || item.title}
+        description={activeSub?.description || item.frequency_gap}
+        frequency={activeSub ? `${activeSub.beatFreq} Hz` : item.frequency_gap}
+        color={item.color}
+        enteringKey={subIndex}
+      />
 
-      {/* PROGRESS */}
-      <View style={styles.progressContainer}>
-        <Slider
-          style={styles.slider}
-          value={currentTime}
-          minimumValue={0}
-          maximumValue={duration}
-          minimumTrackTintColor={item.color}
-          maximumTrackTintColor="rgba(0,0,0,0.1)"
-          thumbTintColor={item.color}
-          onSlidingComplete={handleSeek}
-        />
-        <View style={styles.timeLabels}>
-          <Text style={[styles.timeText, { color: item.color }]}>{formatTime(currentTime)}</Text>
-          <Text style={[styles.timeText, { color: item.color }]}>{formatTime(duration)}</Text>
-        </View>
-      </View>
+      <PlayerProgress
+        currentTime={currentTime}
+        duration={duration}
+        color={item.color}
+        onSeek={handleSeek}
+      />
 
-      {/* CONTROLS */}
-      <View style={styles.controlsContainer}>
-        <TouchableOpacity onPress={() => setCurrentTime(t => Math.max(0, t - 15))}>
-          <Ionicons name="play-back-outline" size={30} color={item.color} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={togglePlay}
-          activeOpacity={0.8}
-          style={[styles.playButton, { backgroundColor: item.color }]}
-        >
-          <Ionicons
-            name={isPlaying ? "pause" : "play"}
-            size={40}
-            color={item.bgColor}
-            style={{ marginLeft: isPlaying ? 0 : 4 }}
-          />
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => setIsRepeatOn(!isRepeatOn)}>
-          <Ionicons
-            name={isRepeatOn ? "infinite" : "stop-circle-outline"}
-            size={30}
-            color={item.color}
-            style={{ opacity: isRepeatOn ? 1 : 0.5 }}
-          />
-        </TouchableOpacity>
-      </View>
+      <PlayerControls
+        isPlaying={isPlaying}
+        isRepeatOn={isRepeatOn}
+        color={item.color}
+        bgColor={item.bgColor}
+        onTogglePlay={togglePlay}
+        onToggleRepeat={handleToggleRepeat}
+        onSeekBack={handleSeekBack}
+      />
     </SafeAreaView>
   );
 };
@@ -268,11 +324,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     flex: 1,
-    // Reduced padding to make room for selector
-    paddingVertical: 10, 
+    paddingVertical: 10,
   },
   artworkWrapper: {
-    width: width * 0.7, 
+    width: width * 0.7,
     height: width * 0.7,
     borderRadius: 20,
     elevation: 10,
@@ -320,7 +375,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     paddingHorizontal: 20,
-    height: 70, // Fixed height to prevent jumpiness
+    minHeight: 90, 
     justifyContent: 'center'
   },
   songTitle: {
@@ -335,6 +390,12 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     textAlign: 'center',
     lineHeight: 20
+  },
+  frequencyText: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginTop: 8,
+    opacity: 0.9,
   },
   progressContainer: {
     width: width,

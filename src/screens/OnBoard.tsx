@@ -33,13 +33,13 @@ const onboardingData = [
   {
     id:2,
     title: 'Use Good Quality Earphones',
-    description: 'To get the best benefits of binaural beats',
+    description: 'For best experience, use good quality earphones to listen to the beats. Please keep volume at moderate level (40-60%)',
     image: require('../img/onboard-img-2.png'),
   },
   {
     id:3,
     title: 'Mental Peace',
-    description: 'Listening only 10 minutes can relax your mind and enhance you mood',
+    description: 'Listening only 10-15 minutes can relax your mind and enhance your mood',
     image: require('../img/onboard-img-3.png'),
   },
 ];

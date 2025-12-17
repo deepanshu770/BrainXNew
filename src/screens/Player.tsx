@@ -9,7 +9,6 @@ import {
   TouchableOpacity,
   AppState,
   ScrollView,
-  Platform
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -242,7 +241,6 @@ const Player = () => {
 
   const handleSeek = useCallback((value: number) => setCurrentTime(value), []);
   const handleBack = useCallback(() => navigation.goBack(), [navigation]);
-  const handleSubSelect = useCallback((idx: number) => setSubIndex(idx), []);
   const handleSeekBack = useCallback(() => setCurrentTime(t => Math.max(0, t - 15)), []);
   const handleToggleRepeat = useCallback(() => setIsRepeatOn(r => !r), []);
 
